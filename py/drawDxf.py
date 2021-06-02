@@ -18,7 +18,21 @@ def savePt(pt, move = False):
 	global scaleFactor
 
 	x = int((pt[0] -xMid)*scaleFactor)
-	y = int((pt[1] -xMid)*scaleFactor)
+	y = int((pt[1] -yMid)*scaleFactor)
+
+	#Catch failures
+	if x > 32767:
+		print("x over " + str(x) + " | " + str(pt[0]))
+	elif x < -32767:
+		print("x under " + str(x) + " | " + str(pt[0]))
+
+	if y > 32767:
+		print("y over " + str(y) + " | " + str(pt[1]))
+	elif y < -32767:
+		print("y under " + str(y) + " | " + str(pt[1]))
+
+
+
 	if move:
 		string = "m " + str(x) + " " + str(y) + "\n"
 	else:
@@ -60,7 +74,7 @@ for i in selPath.split("."):
 title = titleBreakdown[-2]
 file = open("out/" + title + ".txt", "w")
 
-
+file.write("x settings.txt\n")
 
 #Make demo output DXF
 demoDxf = ezdxf.new(setup=True)
@@ -80,7 +94,7 @@ for l in msp.query('LINE'):
 	lines.append((pt1, pt2))
 	# print((pt1,pt2))
 
-print(lines)
+# print(lines)
 
 
 #Get starting vals
@@ -111,15 +125,19 @@ scaleFactor = 0
 xDiff = (xDims[1] -xDims[0])
 yDiff = (yDims[1] -yDims[0])
 if xDiff > yDiff:
-	scaleFactor = 65534/xDiff
+	scaleFactor = 65532/xDiff
 else:
-	scaleFactor = 65534/yDiff
+	scaleFactor = 65532/yDiff
 
 xMid = xDims[0] +xDiff/2
 yMid = yDims[0] +yDiff/2
 
 print("xDiff: " + str(xDiff))
 print("yDiff: " + str(yDiff))
+print("xMid: " + str(xMid))
+print("yMid: " + str(yMid))
+print("xMin: " + str(xDims[0]) + " xMax: " + str(xDims[1]))
+print("yMin: " + str(yDims[0]) + " yMax: " + str(yDims[1]))
 print("scaleFactor: " + str(scaleFactor))
 
 pos = (0,0)
@@ -186,4 +204,4 @@ savePt((0,0))
 file.write("d Done with drawfile")
 
 file.close()
-demoDxf.saveas("out/" + title + ".dxf")
+demoDxf.saveas("out/" + title + "_draw.dxf")
