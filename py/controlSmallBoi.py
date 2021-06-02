@@ -23,6 +23,9 @@ def bigLoop(port, inStr, nestCount):
 				break
 		else:
 			command = input("Input command: ") # "m -99 500" #
+			if command == "":
+				continue
+
 
 		command = command.split()
 
@@ -95,7 +98,7 @@ def bigLoop(port, inStr, nestCount):
 				outStr += i + " "
 
 			print(indt + outStr)
-			input(indt + "Continue")
+			input(indt + "Press Enter:")
 			continue
 
 		#move 7
@@ -166,7 +169,6 @@ def bigLoop(port, inStr, nestCount):
 		#Break command 12
 		elif command[0] in ("break", "b"):
 			print(indt + "Exiting!")
-			fileIn.close()
 			sys.exit()
 
 		#Display command 13

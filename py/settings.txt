@@ -1,5 +1,17 @@
-s 0 7
+# Basic settings, speeds and pen vals, should be const
+s 0 7 # set stepDelay
+s 1 52 # set stepDist
+# set lServoPos
 s 4 35
 s 5 135
+# set rServoPos
 s 6 125
 s 7 45
+#
+# Set output vars
+s 9 14	# set lineXYDistStep
+s 8 32	# set imagescale
+#
+# set measured settings, update periodically
+s 3 455 # set base
+s 2 510 # set lInit

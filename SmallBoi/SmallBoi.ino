@@ -6,16 +6,16 @@ byte val; // variable to receive data from the serial port
 int ledpin = 13; // Arduino LED pin 13 (on-board LED)
 
 //Settings that can be changed in code, values are in 1/10"
-int stepDelay = 10;
+int stepDelay = 7;
 int stepDist = 52;
-int lInit = 710;
-int base = 620;
-int lServoPos[] = {85, 95};
-int rServoPos[] = {95,85};
+int lInit = 510;
+int base = 455;
+int lServoPos[] = {35, 135};
+int rServoPos[] = {125,45};
 int imageScale = 60;
-int lineDimPeriod = 520;
+int lineXYDistStep = 20;
 //Reference vals by pointer set
-int *params[] = {&stepDelay, &stepDist, &lInit, &base, &lServoPos[0], &lServoPos[1], &rServoPos[0], &rServoPos[1], &imageScale, &lineDimPeriod};
+int *params[] = {&stepDelay, &stepDist, &lInit, &base, &lServoPos[0], &lServoPos[1], &rServoPos[0], &rServoPos[1], &imageScale, &lineXYDistStep};
 
 float w0 = base/2;
 float h0 = sqrt(pow(lInit, 2) - pow(base/2, 2));
@@ -49,15 +49,15 @@ void getLR_fromXY(int* outLR, float X, float Y){ //Converts XY raws into LR step
    // Serial.println(w);
    // Serial.println(h);
    
-   outLR[0] = floor(getDist(w,h) - lInit*stepDist); //L position
-   outLR[1] = floor(getDist(base -w,h) -lInit*stepDist); //R position
+   outLR[0] = floor((getDist(w      ,h) -lInit) *stepDist); //L position
+   outLR[1] = floor((getDist(base -w,h) -lInit) *stepDist); //R position
 
    // Serial.println('-');
    // Serial.println(outLR[0]);
    // Serial.println(outLR[1]);
 }
 
-void getXY_fromLR(int* outXY, float R, float L){
+void getXY_fromLR(int* outXY, float L, float R){
    float w = (pow(L/stepDist +lInit,2) - pow(R/stepDist +lInit,2) + pow(base,2)) / (2*base);
    float h = sqrt(pow(L/stepDist +lInit,2) - pow(w,2));
 
@@ -74,16 +74,100 @@ void getXY_fromLR(int* outXY, float R, float L){
    // Serial.println("-----");
 }
 
+void moveR(int lTarget, int rTarget){
+   bool doLoop = true;
+
+   while(doLoop){
+      int rPos = right.getPos();
+      int lPos = left.getPos();
+
+      if(lTarget == lPos && rTarget == rPos){
+         doLoop = false;
+         break;
+      }
+
+      if(lTarget < lPos){
+         left.stepDown();
+      }
+      else if(lTarget > lPos){
+         left.stepUp();
+      }
+
+      if(rTarget < rPos){
+         right.stepDown();
+      }
+      else if(rTarget > rPos){
+         right.stepUp();
+      }
+
+      delay(stepDelay);
+   }
+}
+
+
+
+// void doLine(int xTarget, int yTarget){
+//    //Get start of line from current pos
+//    int startXY[2];
+//    getXY_fromLR(startXY, left.getPos(), right.getPos());
+
+//    //Calculated vals
+//    int xDist = xTarget - startXY[0];
+//    int yDist = yTarget - startXY[1];
+//    float dist = getDist(xDist, yDist);
+//    int pos = 0;
+
+//    int targLR[2];
+
+//    Serial.println("-");
+
+//    Serial.print("Targs: ");
+//    Serial.print(xTarget);
+//    Serial.print(" | ");
+//    Serial.println(yTarget);
+
+
+//    Serial.print("StartPos: ");
+//    Serial.print(startXY[0]);
+//    Serial.print(" | ");
+//    Serial.println(startXY[1]);
+
+
+
+//    Serial.print("Dists: ");
+//    Serial.print(dist);
+//    Serial.print(" | ");
+//    Serial.print(xDist);
+//    Serial.print(" | ");
+//    Serial.println(yDist);
+
+//    while(true){
+//       float frac = pos/dist;
+
+//       //Break if after line
+//       if(frac > 1){
+//          break;
+//       }
+
+//       int xPos = frac*xDist +startXY[0];
+//       int yPos = frac*yDist +startXY[1];
+
+//       getLR_fromXY(targLR, xPos, yPos);
+
+//       Serial.print(floor(frac*1000)); Serial.print(" | "); Serial.print(xPos); Serial.print(" | "); Serial.print(yPos);Serial.print(" | "); Serial.print(targLR[0]); Serial.print(" | "); Serial.println(targLR[1]);
+
+//       moveR(targLR[0], targLR[1]); //Move to this pos
+
+
+
+//       pos += lineXYDistStep; //Increment pos
+//    }
+// }
+
+
 
 void setup() {
    Serial.begin(9600); // start serial communication at 9600bps
-
-   // Serial.println("-----");
-   int LR[] = {0,0};
-   getLR_fromXY(LR, 0, 0);
-   int XY[] = {0,0};
-   getXY_fromLR(XY, LR[0], LR[1]);
-
 
    left.attach(2,3,4,5);
    right.attach(7,8,11,12);
@@ -94,6 +178,48 @@ void setup() {
    rServo.write(90);
 
    pinMode(ledpin, OUTPUT); // pin 13 (on-board LED) as OUTPUT
+
+
+
+   //---------------------------------------------------- Test functions
+
+   // Serial.println("------");
+
+   // int LR[2];
+   // int XY[2];
+
+   // XY[0] = 5000;
+   // XY[1] = 5000;
+
+   // getLR_fromXY(LR, XY[0], XY[1]);
+   // Serial.print("LR: "); Serial.print(LR[0]); Serial.print(" - "); Serial.println(LR[1]);
+
+   // getXY_fromLR(XY, LR[0], LR[1]);
+   // Serial.print("XY: "); Serial.print(XY[0]); Serial.print(" - "); Serial.println(XY[1]);
+
+   // doLine(1000, 1000);
+   // doLine(0,0);
+
+   // Serial.println("Done");
+
+
+   // int targXY[2];
+   // getXY_fromLR(targXY, 0, 0);
+   // Serial.print(targXY[0]); Serial.print(" - "); Serial.println(targXY[1]);
+
+   // getXY_fromLR(targXY, 10, 0);
+   // Serial.print(targXY[0]); Serial.print(" - "); Serial.println(targXY[1]);
+
+   // getXY_fromLR(targXY, -500, 0);
+   // Serial.print(targXY[0]); Serial.print(" - "); Serial.println(targXY[1]);
+
+   // Serial.println(targsLR[0]);
+   // Serial.println(targsLR[1]);
+
+
+   // ---------------------------------------------------- End Test functions
+
+
 }
 
 
@@ -106,33 +232,7 @@ void loop() {
       int lTarget = twoByteInt(inBytes[0], inBytes[1]) -32767; //Get int value, adjust to +/-
       int rTarget = twoByteInt(inBytes[2], inBytes[3]) -32767; //Get int value, adjust to +/-
 
-      bool doLoop = true;
-
-      while(doLoop){
-         int rPos = right.getPos();
-         int lPos = left.getPos();
-
-         if(lTarget < lPos){
-            left.stepDown();
-         }
-         else if(lTarget > lPos){
-            left.stepUp();
-         }
-
-         if(rTarget < rPos){
-            right.stepDown();
-         }
-         else if(rTarget > rPos){
-            right.stepUp();
-         }
-
-         
-         delay(stepDelay);
-
-         if(lTarget == lPos && rTarget == rPos){
-            doLoop = false;
-         }
-      }
+      // moveR(lTarget, rTarget); //Move to this pos
    }
 
    //AdjustRad
@@ -141,33 +241,7 @@ void loop() {
       int lTarget = left.getPos() + twoByteInt(inBytes[0], inBytes[1]) -32767; //Get int value, adjust to +/-
       int rTarget = right.getPos() + twoByteInt(inBytes[2], inBytes[3]) -32767; //Get int value, adjust to +/-
 
-      bool doLoop = true;
-
-      while(doLoop){
-         int rPos = right.getPos();
-         int lPos = left.getPos();
-
-         if(lTarget < lPos){
-            left.stepDown();
-         }
-         else if(lTarget > lPos){
-            left.stepUp();
-         }
-
-         if(rTarget < rPos){
-            right.stepDown();
-         }
-         else if(rTarget > rPos){
-            right.stepUp();
-         }
-
-         
-         delay(stepDelay);
-
-         if(lTarget == lPos && rTarget == rPos){
-            doLoop = false;
-         }
-      }
+      moveR(lTarget, rTarget); //Move to this pos
    }
 
    //Flash
@@ -217,33 +291,7 @@ void loop() {
       int targsLR[2];//Convert to LR
       getLR_fromXY(targsLR, xTarget, yTarget);
 
-      bool doLoop = true;
-
-      while(doLoop){
-         int rPos = right.getPos();
-         int lPos = left.getPos();
-
-         if(targsLR[0] < lPos){
-            left.stepDown();
-         }
-         else if(targsLR[0] > lPos){
-            left.stepUp();
-         }
-
-         if(targsLR[1] < rPos){
-            right.stepDown();
-         }
-         else if(targsLR[1] > rPos){
-            right.stepUp();
-         }
-
-         
-         delay(stepDelay);
-
-         if(targsLR[0] == lPos && targsLR[1] == rPos){
-            doLoop = false;
-         }
-      }
+      moveR(targsLR[0], targsLR[1]); //Move to this pos
    }
 
    //Adjust
@@ -257,33 +305,7 @@ void loop() {
       targsLR[0] += left.getPos(); //Add inits, to make adjust
       targsLR[1] += right.getPos();
 
-      bool doLoop = true;
-
-      while(doLoop){
-         int rPos = right.getPos();
-         int lPos = left.getPos();
-
-         if(targsLR[0] < lPos){
-            left.stepDown();
-         }
-         else if(targsLR[0] > lPos){
-            left.stepUp();
-         }
-
-         if(targsLR[1] < rPos){
-            right.stepDown();
-         }
-         else if(targsLR[1] > rPos){
-            right.stepUp();
-         }
-
-         
-         delay(stepDelay);
-
-         if(targsLR[0] == lPos && targsLR[1] == rPos){
-            doLoop = false;
-         }
-      }
+      moveR(targsLR[0], targsLR[1]); //Move to this pos
    }
 
    //Line
@@ -292,61 +314,35 @@ void loop() {
       int xTarget = twoByteInt(inBytes[0], inBytes[1]) -32767; //Get int value, adjust to +/-
       int yTarget = twoByteInt(inBytes[2], inBytes[3]) -32767; //Get int value, adjust to +/-
 
+
       //Get start of line from current pos
       int startXY[2];
       getXY_fromLR(startXY, left.getPos(), right.getPos());
 
       //Calculated vals
-      float dist = getDist(startXY[0] -xTarget, startXY[1] -yTarget);
-      int xDiff = xTarget - startXY[0];
-      int yDiff = yTarget - startXY[1];
+      int xDist = xTarget - startXY[0];
+      int yDist = yTarget - startXY[1];
+      float dist = getDist(xDist, yDist);
       int pos = 0;
-
-      bool doPause = false;
 
       int targLR[2];
 
-      while(1 == 1){
+      while(true){
          float frac = pos/dist;
-
-         int xPos = frac*xDiff +startXY[0];
-         int yPos = frac*yDiff +startXY[1];
-
-         getLR_fromXY(targLR, xPos, yPos);
-
-         int lGap = targLR[0] - left.getPos();
-         int rGap = targLR[1] - right.getPos();
-
-         //Move if out of bounds
-         if(lGap < 0){
-            left.stepDown();
-            doPause = true;
-         }
-         else if(lGap > 0){
-            left.stepUp();
-            doPause = true;
-         }
-
-         if(rGap < 0){
-            right.stepDown();
-            doPause = true;
-         }
-         else if(rGap > 0){
-            right.stepUp();
-            doPause = true;
-         }
-
-         //If move do pause
-         if(doPause){
-            delay(stepDelay);
-         }
 
          //Break if after line
          if(frac > 1){
             break;
          }
 
-         pos += 1; //Increment pos
+         int xPos = frac*xDist +startXY[0];
+         int yPos = frac*yDist +startXY[1];
+
+         getLR_fromXY(targLR, xPos, yPos);
+
+         moveR(targLR[0], targLR[1]); //Move to this pos
+
+         pos += lineXYDistStep; //Increment pos
       }
    }
 
@@ -358,6 +354,9 @@ void loop() {
       int val = twoByteInt(inBytes[1], inBytes[2]) -32767; //Get int value to set to
 
       *params[var] = val;
+
+      w0 = base/2;
+      h0 = sqrt(pow(lInit, 2) - pow(base/2, 2));
    }
 
 
