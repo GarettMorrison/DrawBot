@@ -19,7 +19,6 @@ def bigLoop(port, inStr, nestCount):
 		if inStr != "":
 			command = fileIn.readline()
 			if command == "":
-				print(indt + "File Finished!")
 				break
 		else:
 			command = input("Input command: ") # "m -99 500" #

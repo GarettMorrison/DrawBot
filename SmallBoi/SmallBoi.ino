@@ -10,7 +10,7 @@ int stepDelay = 7;
 int stepDist = 52;
 int lInit = 510;
 int base = 455;
-int lServoPos[] = {35, 135};
+int lServoPos[] = {35, 135};  
 int rServoPos[] = {125,45};
 int imageScale = 60;
 int lineXYDistStep = 20;
@@ -31,7 +31,9 @@ Servo rServo;
 
 
 int twoByteInt(int MSB, int LSB){
-   int sum = MSB*256 +LSB;
+   long int sum = (MSB*256 +LSB) -32767;
+   if(sum > 32767){sum = 32767;}
+   if(sum < -32767){sum = -32767;}
    return(sum);
 }
 
@@ -39,9 +41,9 @@ float getDist(float x, float y){
    return(sqrt(pow(x, 2) + pow(y, 2)));
 }
 
-void getLR_fromXY(int* outLR, float X, float Y){ //Converts XY raws into LR step positions
-   float w = (X/32767)*imageScale + w0; //x position in dim + init width
-   float h = (-1* Y/32767)*imageScale + h0; //y pos in dim + init h
+void getLR_fromXY(long int* outLR, float X, float Y){ //Converts XY raws into LR step positions
+   float w = (X/32000)*imageScale + w0; //x position in dim + init width
+   float h = (-1* Y/32000)*imageScale + h0; //y pos in dim + init h
    
    // Serial.println(X);
    // Serial.println(Y);
@@ -57,12 +59,12 @@ void getLR_fromXY(int* outLR, float X, float Y){ //Converts XY raws into LR step
    // Serial.println(outLR[1]);
 }
 
-void getXY_fromLR(int* outXY, float L, float R){
+void getXY_fromLR(long int* outXY, float L, float R){
    float w = (pow(L/stepDist +lInit,2) - pow(R/stepDist +lInit,2) + pow(base,2)) / (2*base);
    float h = sqrt(pow(L/stepDist +lInit,2) - pow(w,2));
 
-   outXY[0] = (w -w0) * (32767/imageScale);
-   outXY[1] = (h -h0) * (32767/imageScale) *-1;
+   outXY[0] = (w -w0) * (32000/imageScale);
+   outXY[1] = (h -h0) * (32000/imageScale) *-1;
 
    // Serial.println('-');
    // Serial.println(w);
@@ -185,36 +187,40 @@ void setup() {
 
    // Serial.println("------");
 
-   // int LR[2];
-   // int XY[2];
+   //    stepDelay = 1;
+   //    int startXY[2];
+   //    int targLR[2];
+   //    getXY_fromLR(startXY, left.getPos(), right.getPos());
 
-   // XY[0] = 5000;
-   // XY[1] = 5000;
+   //    int xTarget = -8767;
+   //    int yTarget = -32767;
 
-   // getLR_fromXY(LR, XY[0], XY[1]);
-   // Serial.print("LR: "); Serial.print(LR[0]); Serial.print(" - "); Serial.println(LR[1]);
-
-   // getXY_fromLR(XY, LR[0], LR[1]);
-   // Serial.print("XY: "); Serial.print(XY[0]); Serial.print(" - "); Serial.println(XY[1]);
-
-   // doLine(1000, 1000);
-   // doLine(0,0);
-
-   // Serial.println("Done");
+   //    //Calculated vals
+   //    int xDiff = xTarget - startXY[0];
+   //    int yDiff = yTarget - startXY[1];
+   //    float dist = getDist(xDiff, yDiff);
+   //    long int pos = lineXYDistStep;
 
 
-   // int targXY[2];
-   // getXY_fromLR(targXY, 0, 0);
-   // Serial.print(targXY[0]); Serial.print(" - "); Serial.println(targXY[1]);
+   //    while(true){
+   //       float frac = pos/dist;
 
-   // getXY_fromLR(targXY, 10, 0);
-   // Serial.print(targXY[0]); Serial.print(" - "); Serial.println(targXY[1]);
+   //       //Break if after line
+   //       if(frac > 1){
+   //          break;
+   //       }
 
-   // getXY_fromLR(targXY, -500, 0);
-   // Serial.print(targXY[0]); Serial.print(" - "); Serial.println(targXY[1]);
+   //       int xPos = floor(frac*xDiff +startXY[0]);
+   //       int yPos = floor(frac*yDiff +startXY[1]);
 
-   // Serial.println(targsLR[0]);
-   // Serial.println(targsLR[1]);
+   //       getLR_fromXY(targLR, xPos, yPos);
+
+   //       Serial.print(floor(frac*1000)); Serial.print(" |x: "); Serial.print(xPos); Serial.print(" |y: "); Serial.print(yPos); Serial.print(" |tx "); Serial.print(targLR[0]); Serial.print(" |ty "); Serial.println(targLR[1]);
+   //       moveR(targLR[0], targLR[1]); //Move to this pos
+
+
+   //       pos += lineXYDistStep; //Increment pos
+   //    }
 
 
    // ---------------------------------------------------- End Test functions
@@ -229,8 +235,8 @@ void loop() {
    //MoveRad
    if(command == 1){ 
       Serial.readBytes(inBytes, 4);
-      int lTarget = twoByteInt(inBytes[0], inBytes[1]) -32767; //Get int value, adjust to +/-
-      int rTarget = twoByteInt(inBytes[2], inBytes[3]) -32767; //Get int value, adjust to +/-
+      long int lTarget = twoByteInt(inBytes[0], inBytes[1]); //Get int value, adjust to +/-
+      long int rTarget = twoByteInt(inBytes[2], inBytes[3]); //Get int value, adjust to +/-
 
       // moveR(lTarget, rTarget); //Move to this pos
    }
@@ -238,8 +244,8 @@ void loop() {
    //AdjustRad
    else if(command == 2){ 
       Serial.readBytes(inBytes, 4);
-      int lTarget = left.getPos() + twoByteInt(inBytes[0], inBytes[1]) -32767; //Get int value, adjust to +/-
-      int rTarget = right.getPos() + twoByteInt(inBytes[2], inBytes[3]) -32767; //Get int value, adjust to +/-
+      long int lTarget = left.getPos() + twoByteInt(inBytes[0], inBytes[1]); //Get int value, adjust to +/-
+      long int rTarget = right.getPos() + twoByteInt(inBytes[2], inBytes[3]); //Get int value, adjust to +/-
 
       moveR(lTarget, rTarget); //Move to this pos
    }
@@ -285,10 +291,10 @@ void loop() {
    //Move
    if(command == 7){ 
       Serial.readBytes(inBytes, 4);
-      int xTarget = twoByteInt(inBytes[0], inBytes[1]) -32767; //Get int value, adjust to +/-
-      int yTarget = twoByteInt(inBytes[2], inBytes[3]) -32767; //Get int value, adjust to +/-
+      int xTarget = twoByteInt(inBytes[0], inBytes[1]); //Get int value, adjust to +/-
+      int yTarget = twoByteInt(inBytes[2], inBytes[3]); //Get int value, adjust to +/-
 
-      int targsLR[2];//Convert to LR
+      long int targsLR[2];//Convert to LR
       getLR_fromXY(targsLR, xTarget, yTarget);
 
       moveR(targsLR[0], targsLR[1]); //Move to this pos
@@ -297,10 +303,10 @@ void loop() {
    //Adjust
    else if(command == 8){ 
       Serial.readBytes(inBytes, 4);
-      int xTarget = twoByteInt(inBytes[0], inBytes[1]) -32767; //Get int value, adjust to +/-
-      int yTarget = twoByteInt(inBytes[2], inBytes[3]) -32767; //Get int value, adjust to +/-
+      int xTarget = twoByteInt(inBytes[0], inBytes[1]); //Get int value, adjust to +/-
+      int yTarget = twoByteInt(inBytes[2], inBytes[3]); //Get int value, adjust to +/-
 
-      int targsLR[2]; //Convert to LR
+      long int targsLR[2]; //Convert to LR
       getLR_fromXY(targsLR, xTarget, yTarget);
       targsLR[0] += left.getPos(); //Add inits, to make adjust
       targsLR[1] += right.getPos();
@@ -311,21 +317,22 @@ void loop() {
    //Line
    else if(command == 10){
       Serial.readBytes(inBytes, 4);
-      int xTarget = twoByteInt(inBytes[0], inBytes[1]) -32767; //Get int value, adjust to +/-
-      int yTarget = twoByteInt(inBytes[2], inBytes[3]) -32767; //Get int value, adjust to +/-
+      int xTarget = twoByteInt(inBytes[0], inBytes[1]); //Get int value, adjust to +/-
+      int yTarget = twoByteInt(inBytes[2], inBytes[3]); //Get int value, adjust to +/-
 
 
       //Get start of line from current pos
-      int startXY[2];
+      long int startXY[2];
+      long int targLR[2];
+
       getXY_fromLR(startXY, left.getPos(), right.getPos());
 
       //Calculated vals
-      int xDist = xTarget - startXY[0];
-      int yDist = yTarget - startXY[1];
-      float dist = getDist(xDist, yDist);
-      int pos = 0;
+      long int xDiff = xTarget - startXY[0];
+      long int yDiff = yTarget - startXY[1];
+      float dist = getDist(xDiff, yDiff);
+      long int pos = lineXYDistStep;
 
-      int targLR[2];
 
       while(true){
          float frac = pos/dist;
@@ -335,8 +342,8 @@ void loop() {
             break;
          }
 
-         int xPos = frac*xDist +startXY[0];
-         int yPos = frac*yDist +startXY[1];
+         int xPos = floor(frac*xDiff +startXY[0]);
+         int yPos = floor(frac*yDiff +startXY[1]);
 
          getLR_fromXY(targLR, xPos, yPos);
 
@@ -351,7 +358,7 @@ void loop() {
    else if(command == 9){ 
       Serial.readBytes(inBytes, 3);
       int var = inBytes[0]; //Get selected variable
-      int val = twoByteInt(inBytes[1], inBytes[2]) -32767; //Get int value to set to
+      int val = twoByteInt(inBytes[1], inBytes[2]); //Get int value to set to
 
       *params[var] = val;
 

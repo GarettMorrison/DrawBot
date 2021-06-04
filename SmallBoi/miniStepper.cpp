@@ -77,6 +77,6 @@ miniStepper::stepDown(){
 	pos -= 1;
 }
 
-int miniStepper::getPos(){
+long int miniStepper::getPos(){
 	return(pos);
 }

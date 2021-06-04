@@ -21,14 +21,18 @@ def savePt(pt, move = False):
 	y = int((pt[1] -yMid)*scaleFactor)
 
 	#Catch failures
-	if x > 32767:
+	if x > 32000:
+		x = 32000
 		print("x over " + str(x) + " | " + str(pt[0]))
-	elif x < -32767:
+	elif x < -32000:
+		x = -32000
 		print("x under " + str(x) + " | " + str(pt[0]))
 
-	if y > 32767:
+	if y > 32000:
+		y = 32000
 		print("y over " + str(y) + " | " + str(pt[1]))
-	elif y < -32767:
+	elif y < -32000:
+		y = -32000
 		print("y under " + str(y) + " | " + str(pt[1]))
 
 
@@ -122,12 +126,12 @@ for i in range(len(lines)):
 
 scaleFactor = 0
 
-xDiff = (xDims[1] -xDims[0])
-yDiff = (yDims[1] -yDims[0])
+xDiff = (xDims[1] -xDims[0]) * 1.25
+yDiff = (yDims[1] -yDims[0]) * 1.25
 if xDiff > yDiff:
-	scaleFactor = 65532/xDiff
+	scaleFactor = 64000/xDiff
 else:
-	scaleFactor = 65532/yDiff
+	scaleFactor = 64000/yDiff
 
 xMid = xDims[0] +xDiff/2
 yMid = yDims[0] +yDiff/2
@@ -141,8 +145,10 @@ print("yMin: " + str(yDims[0]) + " yMax: " + str(yDims[1]))
 print("scaleFactor: " + str(scaleFactor))
 
 pos = (0,0)
-posLast = (0,0)
+posLast = (xMid,yMid)
 penCapOn = True
+savePt(pos, move = True) #Move to 0,0 which is start
+file.write("p 1" + '\n') #pen down
 
 #Loop through lines
 while len(lines) > 0:
@@ -198,9 +204,12 @@ while len(lines) > 0:
 	omsp.add_line(posLast, pos, dxfattribs = {'layer': 'draw'})
 
 
-#All place
+#Go to Mid
 file.write("p 0" + '\n') #pen up
-savePt((0,0))
+savePt((xMid, yMid), move = True) #Middle Point
+
+
+#All place
 file.write("d Done with drawfile")
 
 file.close()

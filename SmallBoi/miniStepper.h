@@ -15,7 +15,7 @@ public:
 	attach(int _a, int _b, int _c, int _d);
 	stepUp();
 	stepDown();
-	int getPos();
+	long int getPos();
 
 private:
 	int a;
@@ -23,7 +23,7 @@ private:
 	int c;
 	int d;
 
-	int pos;
+	long int pos;
 	int step;
 };
 
